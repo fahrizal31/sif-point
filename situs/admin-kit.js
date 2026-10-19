@@ -64,8 +64,12 @@
       box = el('div', { class: 'notif', role: 'dialog', 'aria-label': 'Notifikasi' }, baca, ul); wrap.append(box); bell.setAttribute('aria-expanded', 'true');
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') tutup(); });
+    const gantiPassword = el('button', { class: 'pill', type: 'button', text: 'Ganti password', onclick: () => {
+      const lama = el('input', { type: 'password', autocomplete: 'current-password' }), baru = el('input', { type: 'password', autocomplete: 'new-password' });
+      K.dialog('Ganti password', [el('label', {}, 'Password saat ini', lama), el('label', {}, 'Password baru (minimal 12 karakter)', baru)], [{ t: 'Batal', g: 1, v: false }, { t: 'Simpan', fn: async () => { await K.api('POST', 'auth/change-password', { password_lama: lama.value, password_baru: baru.value }); lama.value = ''; baru.value = ''; K.toast('Password diperbarui. Sesi lama telah dibatalkan.'); } }]);
+    } });
     const keluar = el('button', { class: 'pill', type: 'button', text: 'Keluar', onclick: async () => { await K.api('POST', 'auth/logout', {}); location.href = '/login.html'; } });
-    document.querySelector('header.top .wrap').append(el('div', { class: 'who' }, el('span', { class: 'pill', text: (me.nama || me.email) + ' · ' + (me.instansi || '') }), el('span', { class: 'pill', text: PERAN[me.peran] || me.peran }), wrap, keluar));
+    document.querySelector('header.top .wrap').append(el('div', { class: 'who' }, el('span', { class: 'pill', text: (me.nama || me.email) + ' · ' + (me.instansi || '') }), el('span', { class: 'pill', text: PERAN[me.peran] || me.peran }), wrap, gantiPassword, keluar));
     return me;
   };
   K.periodeKartu = p => el('div', { class: 'warnbox' }, el('b', { text: 'Periode data: ' + p.periode.label + '. ' }), 'Tenggat penyampaian ' + p.periode.tenggat + ' (Keputusan Bupati, Diktum KEENAM). Hari ini ' + p.hari_ini + '.');

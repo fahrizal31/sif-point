@@ -5,6 +5,7 @@ import { sealJson, openJson, hmacHex } from './crypto.js';
 import { DS, semuaKolom, metaKolom, kunciBaris, INSTANSI, buangRahasia } from './datasets.js';
 import { notify, emailsOf, catat, progresPeriode, jalankanPengingat } from './notif.js';
 import { handleLogin } from './login.js';
+import { hashPassword, validPassword, validUsername } from './password.js';
 
 const PERAN = ['pic', 'verifikator', 'super'];
 const INSTANSI_ADMIN = INSTANSI.filter(i => i[3]).map(i => i[0]);
@@ -341,7 +342,7 @@ async function permintaan(env, user, request, path) {
 async function pengguna(env, user, request, path) {
   if (request.method === 'GET') {
     if (!isVerif(user)) bad('Tidak berwenang', 403);
-    return { pengguna: (await env.DB.prepare('SELECT email,nama,jabatan,instansi,peran,aktif,terima_email,terakhir_masuk FROM pengguna ORDER BY peran,instansi,email').all()).results, instansi: INSTANSI.map(i => ({ kode: i[0], nama: i[1], peran_sop: i[2], admin_data: i[3] })) };
+    return { pengguna: (await env.DB.prepare('SELECT p.email,p.nama,p.jabatan,p.instansi,p.peran,p.aktif,p.terima_email,p.terakhir_masuk,k.username FROM pengguna p LEFT JOIN kredensial k ON k.email=p.email ORDER BY p.peran,p.instansi,p.email').all()).results, instansi: INSTANSI.map(i => ({ kode: i[0], nama: i[1], peran_sop: i[2], admin_data: i[3] })) };
   }
   if (!isSuper(user)) bad('Hanya Super Admin yang mengelola akun', 403);
   const b = await bodyJson(request), email = str(b.email, 200).toLowerCase();
@@ -356,8 +357,26 @@ async function pengguna(env, user, request, path) {
   if (b.peran === 'super' && !['DPMPTSP', 'DISKOMINFOSANDI'].includes(b.instansi)) bad('Super Admin: Bidang Penanaman Modal (DPMPTSP) atau Diskominfosandi');
   const aktif = b.aktif === 0 || b.aktif === false ? 0 : 1;
   if (email === user.email && (!aktif || b.peran !== 'super')) bad('Anda tidak dapat menurunkan atau menonaktifkan akun sendiri', 409);
+  const existing = await env.DB.prepare('SELECT username FROM kredensial WHERE email=?').bind(email).first();
+  const username = str(b.username || existing?.username, 40).toLowerCase();
+  const password = b.password;
+  let hash = null;
+  if (env.AUTH_MODE === 'session') {
+    if (!validUsername(username)) bad('Username harus 3–40 karakter, dimulai huruf, hanya huruf kecil, angka, titik, garis bawah, atau tanda hubung');
+    if (!existing && !validPassword(password)) bad('Password awal minimal 12 dan maksimal 128 karakter');
+    if (password !== undefined && password !== '' && !validPassword(password)) bad('Password minimal 12 dan maksimal 128 karakter');
+    const taken = await env.DB.prepare('SELECT email FROM kredensial WHERE username=?').bind(username).first();
+    if (taken && taken.email !== email) bad('Username sudah digunakan', 409);
+    if (password) hash = await hashPassword(password);
+  }
   await env.DB.prepare('INSERT INTO pengguna (email,nama,jabatan,instansi,peran,aktif,terima_email,dibuat) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET nama=excluded.nama,jabatan=excluded.jabatan,instansi=excluded.instansi,peran=excluded.peran,aktif=excluded.aktif,terima_email=excluded.terima_email')
     .bind(email, str(b.nama, 120), str(b.jabatan, 120), b.instansi, b.peran, aktif, b.terima_email === 0 ? 0 : 1, nowIso()).run();
+  if (env.AUTH_MODE === 'session') {
+    if (existing) {
+      if (hash) await env.DB.prepare('UPDATE kredensial SET username=?,password_hash=?,versi=versi+1,diubah=? WHERE email=?').bind(username, hash, nowIso(), email).run();
+      else if (username !== existing.username) await env.DB.prepare('UPDATE kredensial SET username=? WHERE email=?').bind(username, email).run();
+    } else await env.DB.prepare('INSERT INTO kredensial (email,username,password_hash,versi,diubah) VALUES (?,?,?,1,?)').bind(email, username, hash, nowIso()).run();
+  }
   await catat(env, user, 'pengguna', null, email, `${b.peran}/${b.instansi}/aktif=${aktif}`);
   return { ok: true };
 }

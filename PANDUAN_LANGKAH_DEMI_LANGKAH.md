@@ -4,7 +4,7 @@ Ikuti urutan ini dari atas ke bawah. Folder yang dipakai adalah **`SIF_POINT_BAT
 
 ## 1. Siapkan akun dan informasi
 
-Anda memerlukan akun GitHub, Vercel, TiDB Cloud, dan Resend; satu alamat email untuk Super Admin; serta domain untuk mengirim email login. Domain situs resmi bisa dihubungkan setelah situs awal berhasil tampil.
+Anda memerlukan akun GitHub, Vercel, dan TiDB Cloud; satu alamat email, username, serta password kuat untuk Super Admin. Resend dan domain pengirim hanya diperlukan untuk notifikasi email, bukan login.
 
 Simpan kata sandi TiDB, API key Resend, dan kunci aplikasi di pengelola kata sandi. Jangan menaruhnya dalam berkas GitHub. Kata sandi TiDB yang pernah dibagikan melalui percakapan sebaiknya diganti setelah pengaturan selesai; perbarui juga `TIDB_URL` di Vercel setelah menggantinya.
 
@@ -18,14 +18,13 @@ Simpan kata sandi TiDB, API key Resend, dan kunci aplikasi di pengelola kata san
 
 GitHub mendukung seret file atau folder di halaman unggah. Batas unggah lewat browser adalah 25 MiB per file dan 100 file sekaligus; paket ini sudah diperiksa berada di bawah batas tersebut. [Petunjuk GitHub](https://docs.github.com/en/repositories/working-with-files/managing-files/adding-a-file-to-a-repository)
 
-## 3. Siapkan email login di Resend
+## 3. Siapkan login Super Admin
 
-1. Di Resend, tambahkan domain pengirim pada menu **Domains**.
-2. Salin catatan DNS yang ditampilkan Resend ke pengelola DNS domain Anda, lalu tunggu status domain menjadi **Verified**. Gunakan nilai DNS yang diberikan Resend untuk domain Anda sendiri.
-3. Pada menu **API Keys**, buat kunci dengan izin **Sending access** untuk domain tersebut. Simpan kuncinya; ini akan menjadi `RESEND_API_KEY`.
-4. Tentukan alamat pengirim, misalnya `SIF POINT BATARA <no-reply@domain-anda.go.id>`. Ini akan menjadi `MAIL_FROM`. Di formulir variabel Vercel, masukkan nilainya **tanpa tanda kutip tambahan**.
+1. Siapkan berkas JSON pribadi **di luar folder GitHub** dengan `email`, `username`, dan `password`. Password minimal 12 karakter.
+2. Isi `SUPER_ADMIN_EMAILS` di `.env.local` dengan email yang sama, lalu jalankan `node --env-file=.env.local db/setup-password-admin.mjs ../ADMIN_LOGIN_AWAL.json` dari akar proyek.
+3. Skrip ini membuat tabel kredensial dan akun Super Admin di TiDB. Password hanya disimpan sebagai hash. Jangan unggah berkas JSON itu ke GitHub; setelah login pertama, ganti password lewat tombol **Ganti password**, lalu hapus berkasnya.
 
-Kode login admin dikirim lewat email; login produksi belum dapat diuji sebelum pengiriman email ini siap. [Panduan verifikasi domain Resend](https://resend.com/changelog/domain-verification-events) · [Panduan izin API key Resend](https://resend.com/changelog/new-api-key-permissions)
+Super Admin dapat membuat username dan password petugas lain lewat **Akun dan wali data**. Resend dapat ditambahkan nanti untuk notifikasi email.
 
 ## 4. Buat tiga kunci aplikasi
 
@@ -61,9 +60,9 @@ Jika perintah `node` tidak dikenali, pasang Node.js 24 terlebih dahulu dari [sit
    | `PII_KEY` | Hasil acak pertama dari langkah 4. |
    | `SESSION_SECRET` | Hasil acak kedua dari langkah 4. |
    | `CRON_SECRET` | Hasil acak ketiga dari langkah 4. |
-   | `SUPER_ADMIN_EMAILS` | Alamat email Anda yang akan menjadi Super Admin dan bisa menerima kode login. |
-   | `RESEND_API_KEY` | API key Resend dari langkah 3. |
-   | `MAIL_FROM` | Alamat pengirim pada domain Resend yang terverifikasi. |
+   | `SUPER_ADMIN_EMAILS` | Alamat email Super Admin awal. |
+   | `RESEND_API_KEY` | Opsional untuk notifikasi email. |
+   | `MAIL_FROM` | Opsional untuk notifikasi email. |
 
    Jika kata sandi TiDB mengandung `@`, `:`, `/`, `#`, atau karakter khusus URL lain, gunakan connection string siap salin dari TiDB dan lakukan URL encoding pada bagian kata sandi. **Jangan pilih database `sys`**, karena itu database sistem.
 
@@ -80,7 +79,7 @@ Vercel mendukung impor repositori GitHub, pengaturan root/build, dan variabel li
    - `https://alamat-situs/api/public/status` → menampilkan JSON dengan `"ok":true`.
    - `https://alamat-situs/api/public/peluang.csv` → mengunduh atau menampilkan CSV.
    - `https://alamat-situs/login.html` → tampil halaman login.
-   - Masuk dengan email `SUPER_ADMIN_EMAILS`, minta kode, dan periksa kotak masuk atau folder spam. Setelah masuk, buka `/publish.html`.
+   - Masuk dengan username dan password yang disiapkan pada langkah 3. Setelah masuk, buka `/publish.html`.
 
 Jika menggunakan domain resmi, hubungkan domain itu lewat **Project → Settings → Domains**, ikuti petunjuk DNS Vercel, lalu ganti `SITE_URL` dan redeploy.
 
@@ -90,7 +89,7 @@ Jika menggunakan domain resmi, hubungkan domain itu lewat **Project → Settings
 |---|---|
 | Build gagal atau halaman 404 | Pastikan `package.json` berada di akar repositori dan Root Directory `./`. |
 | `/api/public/status` menampilkan 500 | Periksa `TIDB_URL`, terutama akhiran `/sif_point_batara`, lalu lihat **Vercel → Logs**. |
-| Login menyebut email belum dikonfigurasi atau kode tidak tiba | Periksa status domain Resend, `RESEND_API_KEY`, `MAIL_FROM`, dan email Super Admin. |
+| Login gagal | Periksa username/password, status aktif akun, dan bahwa `db/setup-password-admin.mjs` telah dijalankan pada TiDB yang sama. |
 | Mengubah variabel tetapi hasil lama masih muncul | Lakukan redeploy; deployment lama tidak menerima nilai variabel baru. |
 | `/admin.html` mengarah ke login | Ini normal sebelum Anda masuk. |
 

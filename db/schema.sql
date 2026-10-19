@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS pengguna (
   email TEXT PRIMARY KEY, nama TEXT, jabatan TEXT, instansi TEXT REFERENCES instansi(kode),
   peran TEXT NOT NULL CHECK (peran IN ('pic','verifikator','super')),
   aktif INTEGER NOT NULL DEFAULT 1, terima_email INTEGER NOT NULL DEFAULT 1, dibuat TEXT NOT NULL, terakhir_masuk TEXT);
+CREATE TABLE IF NOT EXISTS kredensial (email TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, versi INTEGER NOT NULL DEFAULT 1, diubah TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS wali_aturan (id INTEGER PRIMARY KEY AUTOINCREMENT, dataset TEXT NOT NULL, kolom TEXT NOT NULL DEFAULT '*', instansi TEXT NOT NULL REFERENCES instansi(kode), UNIQUE(dataset,kolom,instansi));
 CREATE TABLE IF NOT EXISTS baris (
   id INTEGER PRIMARY KEY AUTOINCREMENT, dataset TEXT NOT NULL, kunci TEXT NOT NULL, instansi TEXT,

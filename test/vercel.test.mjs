@@ -4,12 +4,10 @@ import { handle } from '../src/lib/router.js';
 import { readSession } from '../src/lib/session.js';
 import { mysqlSql } from '../src/lib/tidb.js';
 import { forwardApiRequest } from '../api/handler.js';
+import { hashPassword } from '../src/lib/password.js';
 
 const DB = bukaDb(':memory:', ['db/schema.sql', 'db/seed.sql']);
-const env = { DB, AUTH_MODE: 'session', PII_KEY: Buffer.alloc(32, 7).toString('base64'), SESSION_SECRET: 'local-test-secret-at-least-32-characters', SUPER_ADMIN_EMAILS: 'super@contoh.go.id', RESEND_API_KEY: 'test', MAIL_FROM: 'test@example.com' };
-let sent;
-const realFetch = globalThis.fetch;
-globalThis.fetch = async (_url, options) => { sent = JSON.parse(options.body); return new Response('{}', { status: 200 }); };
+const env = { DB, AUTH_MODE: 'session', PII_KEY: Buffer.alloc(32, 7).toString('base64'), SESSION_SECRET: 'local-test-secret-at-least-32-characters' };
 const post = (path, body, cookie = '') => handle(new Request('https://example.com/api/' + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-sif': '1', origin: 'https://example.com', cookie }, body: JSON.stringify(body) }), env);
 try {
   assert.match(mysqlSql('INSERT OR IGNORE INTO x (a) VALUES (?)'), /^INSERT IGNORE/);
@@ -17,20 +15,29 @@ try {
   const csv = await forwardApiRequest(new Request('https://example.com/api/handler?path=public%2Fpeluang.csv'), env);
   assert.equal(csv.status, 200);
   assert.match(csv.headers.get('content-type'), /text\/csv/);
-  const request = await post('auth/request', { email: 'super@contoh.go.id' });
-  assert.equal(request.status, 200);
-  assert.equal(sent.to[0], 'super@contoh.go.id');
-  const code = sent.text.match(/\b\d{6}\b/)[0];
-  assert.equal((await post('auth/verify', { email: 'super@contoh.go.id', code: code === '000000' ? '111111' : '000000' })).status, 401);
-  const verify = await post('auth/verify', { email: 'super@contoh.go.id', code });
-  assert.equal(verify.status, 200);
-  const cookie = verify.headers.get('set-cookie').split(';')[0];
+  await DB.prepare('INSERT INTO pengguna (email,nama,instansi,peran,dibuat) VALUES (?,?,?,?,?)').bind('super@contoh.go.id','Super Admin','DPMPTSP','super',new Date().toISOString()).run();
+  await DB.prepare('INSERT INTO kredensial (email,username,password_hash,diubah) VALUES (?,?,?,?)').bind('super@contoh.go.id','superadmin',await hashPassword('password-kuat-awal-2026'),new Date().toISOString()).run();
+  assert.equal((await post('auth/request', { email: 'super@contoh.go.id' })).status, 404);
+  assert.equal((await post('auth/login', { username: 'superadmin', password: 'password-salah-2026' })).status, 401);
+  const login = await post('auth/login', { username: 'superadmin', password: 'password-kuat-awal-2026' });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('set-cookie').split(';')[0];
   assert.equal(await readSession(env, cookie), 'super@contoh.go.id');
   const me = await handle(new Request('https://example.com/api/me', { headers: { cookie } }), env);
   assert.equal(me.status, 200);
   assert.equal((await me.json()).peran, 'super');
-  assert.equal((await post('auth/verify', { email: 'super@contoh.go.id', code })).status, 401);
+  assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', password: 'password-petugas-2026', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
+  assert.equal((await post('auth/login', { username: 'petugas', password: 'password-petugas-2026' })).status, 200);
+  assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', password: 'password-petugas-baru-2026', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
+  assert.equal((await post('auth/login', { username: 'petugas', password: 'password-petugas-2026' })).status, 401);
+  assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic', aktif: 0 }, cookie)).status, 200);
+  assert.equal((await post('auth/login', { username: 'petugas', password: 'password-petugas-baru-2026' })).status, 401);
+  const changed = await post('auth/change-password', { password_lama: 'password-kuat-awal-2026', password_baru: 'password-kuat-baru-2026' }, cookie);
+  assert.equal(changed.status, 200);
+  assert.equal((await handle(new Request('https://example.com/api/me', { headers: { cookie } }), env)).status, 401);
+  assert.equal((await post('auth/login', { username: 'superadmin', password: 'password-kuat-awal-2026' })).status, 401);
+  assert.equal((await post('auth/login', { username: 'superadmin', password: 'password-kuat-baru-2026' })).status, 200);
   const logout = await post('auth/logout', {}, cookie);
   assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
   console.log('Vercel auth dan konversi SQL OK');
-} finally { globalThis.fetch = realFetch; }
+} finally { DB._raw.close(); }

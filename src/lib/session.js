@@ -13,12 +13,12 @@ async function sign(env, data) {
   return b64u(new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(data))));
 }
 
-export async function makeSession(env, email) {
-  const payload = b64u(enc.encode(JSON.stringify({ email, exp: Date.now() + 12 * 3600_000 })));
+export async function makeSession(env, email, version = 0) {
+  const payload = b64u(enc.encode(JSON.stringify({ email, version, exp: Date.now() + 12 * 3600_000 })));
   return payload + '.' + await sign(env, payload);
 }
 
-export async function readSession(env, cookieHeader) {
+export async function readSessionData(env, cookieHeader) {
   const token = String(cookieHeader || '').split(';').map(x => x.trim()).find(x => x.startsWith('sif_session='))?.slice(12);
   if (!token) return null;
   const [payload, signature, extra] = token.split('.');
@@ -28,8 +28,12 @@ export async function readSession(env, cookieHeader) {
   if (a.length !== b.length || a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0)) return null;
   try {
     const value = JSON.parse(new TextDecoder().decode(fromB64u(payload)));
-    return value.exp > Date.now() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.email) ? value.email : null;
+    return value.exp > Date.now() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.email) ? value : null;
   } catch { return null; }
+}
+
+export async function readSession(env, cookieHeader) {
+  return (await readSessionData(env, cookieHeader))?.email || null;
 }
 
 export const sessionCookie = (token, secure = true) => `sif_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200${secure ? '; Secure' : ''}`;

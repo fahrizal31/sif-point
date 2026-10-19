@@ -1,7 +1,6 @@
-// Autentikasi: identitas datang dari Cloudflare Access (JWT RS256, diverifikasi di sini lagi sebagai lapis kedua),
-// peran datang dari tabel pengguna. Tidak ada kata sandi yang disimpan.
+// Identitas admin berasal dari sesi bertanda tangan di Vercel atau Cloudflare Access.
 import { HttpError, nowIso } from './util.js';
-import { readSession } from './session.js';
+import { readSession, readSessionData } from './session.js';
 let jwksCache = { t: 0, keys: null };
 const b64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')), c => c.charCodeAt(0));
 
@@ -55,6 +54,11 @@ export async function authenticate(request, env) {
     u = await env.DB.prepare('SELECT * FROM pengguna WHERE email=?').bind(email).first();
   }
   if (!u || !u.aktif) throw new HttpError(403, 'Akun Anda belum terdaftar sebagai admin SIF POINT BATARA. Hubungi Super Admin.');
+  if (env.AUTH_MODE === 'session' && !(env.DEV_MODE === '1' && request.headers.get('x-dev-email') && ['localhost', '127.0.0.1'].includes(new URL(request.url).hostname))) {
+    const session = await readSessionData(env, request.headers.get('cookie'));
+    const credential = await env.DB.prepare('SELECT versi FROM kredensial WHERE email=?').bind(email).first();
+    if (!session || !credential || Number(session.version) !== Number(credential.versi)) throw new HttpError(401, 'Sesi berakhir. Masuk kembali melalui halaman login.');
+  }
   await env.DB.prepare('UPDATE pengguna SET terakhir_masuk=? WHERE email=?').bind(nowIso(), email).run();
   return u;
 }

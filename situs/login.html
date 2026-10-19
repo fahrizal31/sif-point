@@ -9,18 +9,16 @@
     main{background:white;max-width:430px;width:100%;padding:32px;border-radius:18px;box-shadow:0 12px 36px #17363116}
     h1{font-size:1.55rem;margin:0 0 10px}p{line-height:1.5;color:#536762}label{display:block;font-weight:650;margin:22px 0 6px}
     input{width:100%;padding:13px;border:1px solid #abbdb7;border-radius:8px;font:inherit}button{margin-top:18px;width:100%;border:0;border-radius:8px;padding:13px;background:#087b63;color:white;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.65;cursor:wait}
-    #step2{display:none}.status{min-height:24px;margin-top:16px}.error{color:#a12828}a{color:#087b63}
+    .status{min-height:24px;margin-top:16px}.error{color:#a12828}a{color:#087b63}
   </style>
 </head>
 <body><main>
-  <h1>Masuk ke Admin</h1><p>Gunakan surel yang terdaftar sebagai petugas SIF POINT BATARA. Kode masuk berlaku 10 menit.</p>
-  <form id="step1"><label for="email">Alamat surel</label><input id="email" type="email" autocomplete="email" required maxlength="255"><button>Kirim kode masuk</button></form>
-  <form id="step2"><label for="code">Kode enam angka</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button>Masuk</button></form>
+  <h1>Masuk ke Admin</h1><p>Masukkan username dan password yang diberikan Super Admin.</p>
+  <form id="login"><label for="username">Username</label><input id="username" type="text" autocomplete="username" required minlength="3" maxlength="40" autocapitalize="none" spellcheck="false"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button>Masuk</button></form>
   <p id="status" class="status" role="status"></p><p><a href="/">Kembali ke website</a></p>
 </main><script>
-  const s1=document.getElementById('step1'),s2=document.getElementById('step2'),status=document.getElementById('status'),emailEl=document.getElementById('email'),codeEl=document.getElementById('code');
+  const form=document.getElementById('login'),status=document.getElementById('status'),usernameEl=document.getElementById('username'),passwordEl=document.getElementById('password');
   const next=['/admin.html','/publish.html','/status.html'].includes(new URLSearchParams(location.search).get('next'))?new URLSearchParams(location.search).get('next'):'/publish.html';
   async function send(action,data){const r=await fetch('/api/auth/'+action,{method:'POST',headers:{'content-type':'application/json','x-sif':'1'},credentials:'same-origin',body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw Error(j.error||'Permintaan gagal');return j}
-  s1.onsubmit=async e=>{e.preventDefault();const b=s1.querySelector('button');b.disabled=true;status.className='status';status.textContent='Mengirim kode…';try{const r=await send('request',{email:emailEl.value});s2.style.display='block';status.textContent=r.dev_code?'Kode uji lokal: '+r.dev_code:'Jika surel terdaftar, kode telah dikirim. Periksa kotak masuk atau folder spam.';codeEl.focus()}catch(x){status.className='status error';status.textContent=x.message}finally{b.disabled=false}};
-  s2.onsubmit=async e=>{e.preventDefault();const b=s2.querySelector('button');b.disabled=true;status.className='status';status.textContent='Memeriksa kode…';try{await send('verify',{email:emailEl.value,code:codeEl.value});location.replace(next)}catch(x){status.className='status error';status.textContent=x.message}finally{b.disabled=false}};
+  form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button');b.disabled=true;status.className='status';status.textContent='Memeriksa akun…';try{await send('login',{username:usernameEl.value,password:passwordEl.value});passwordEl.value='';location.replace(next)}catch(x){status.className='status error';status.textContent=x.message;passwordEl.value='';passwordEl.focus()}finally{b.disabled=false}};
 </script></body></html>
