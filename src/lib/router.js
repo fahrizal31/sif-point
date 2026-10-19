@@ -110,14 +110,19 @@ async function daftarDataset(env, user) {
 async function lihatData(env, user, dataset, url) {
   const ke = await kolomEdit(env, user, dataset);
   if (!ke.length && !isVerif(user)) bad('Anda bukan wali data pada dataset ini', 403);
-  const q = str(url.searchParams.get('q'), 100).toLowerCase(), lim = Math.min(+url.searchParams.get('limit') || 200, 500), off = +url.searchParams.get('offset') || 0;
+  const requestedLimit = Number(url.searchParams.get('limit'));
+  const requestedOffset = Number(url.searchParams.get('offset'));
+  const q = str(url.searchParams.get('q'), 100).toLowerCase();
+  const lim = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 500) : 200;
+  const off = Number.isSafeInteger(requestedOffset) && requestedOffset >= 0 ? requestedOffset : 0;
   let sql = 'SELECT * FROM baris WHERE dataset=?', b = [dataset];
   if (DS[dataset].perInstansi && !isVerif(user)) { sql += ' AND instansi=?'; b.push(user.instansi); }
   if (q) { sql += ' AND LOWER(data) LIKE ?'; b.push('%' + q.replace(/[%_]/g, '') + '%'); }
   const st = url.searchParams.get('status_data'); if (['sementara', 'terverifikasi', 'resmi'].includes(st)) { sql += ' AND status_data=?'; b.push(st); }
   const tb = url.searchParams.get('terbit'); if (tb === 'ya') sql += " AND terbit='ya'";
   const tot = (await env.DB.prepare(sql.replace('SELECT *', 'SELECT COUNT(*) n')).bind(...b).first()).n;
-  const rs = (await env.DB.prepare(sql + ' ORDER BY id LIMIT ? OFFSET ?').bind(...b, lim, off).all()).results;
+  // TiDB Cloud Starter menolak placeholder pada LIMIT/OFFSET; kedua angka sudah divalidasi di atas.
+  const rs = (await env.DB.prepare(sql + ` ORDER BY id LIMIT ${lim} OFFSET ${off}`).bind(...b).all()).results;
   const ids = rs.map(r => r.id), open = {};
   if (ids.length) for (const u of (await env.DB.prepare(`SELECT id,baris_id,status,oleh FROM usulan WHERE baris_id IN (${ids.map(() => '?').join(',')}) AND status IN ('draft','diajukan','dikembalikan')`).bind(...ids).all()).results) (open[u.baris_id] ||= []).push(u);
   return { total: tot, kolom_edit: ke, baris: rs.map(r => ({ ...barisOut(r), usulan_terbuka: open[r.id] || [] })) };
