@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Verifikasi dan Penerbitan · SIF POINT BATARA</title>
+<link rel="stylesheet" href="admin-kit.css">
+</head>
+<body>
+<header class="top"><div class="wrap"><div><b>SIF POINT BATARA</b><small>Verifikasi (DPMPTSP) dan penerbitan (Super Admin) · SOP-02 dan SOP-03</small></div><a class="btn g s" style="color:#fff;border-color:#fff;text-decoration:none" href="admin.html">Admin instansi</a></div></header>
+<nav class="tabs" role="tablist" aria-label="Menu verifikasi dan penerbitan"><div class="wrap" id="nav"></div></nav>
+<main class="wrap" id="main" tabindex="-1" aria-live="polite"><p class="sub">Memuat…</p></main>
+<script src="admin-kit.js"></script>
+<script>
+(async () => {
+  const { el, api } = K; let me;
+  try { me = await K.mulai(); } catch (e) { return; }
+  if (me.peran === 'pic') { document.getElementById('main').replaceChildren(el('div', { class: 'errbox', role: 'alert', text: 'Halaman ini untuk admin verifikator DPMPTSP dan Super Admin. Admin instansi memakai halaman Admin Instansi.' })); return; }
+  const SUPER = me.peran === 'super';
+  const kv = o => Object.entries(o).map(([k, v]) => k + ': ' + v).join('; ');
+
+  async function ringkasan() {
+    const [r, p] = await Promise.all([api('GET', 'ringkasan'), api('GET', 'periode')]); const root = el('div', {}, K.periodeKartu(p));
+    root.append(el('div', { class: 'grid' }, [['diajukan', 'Usulan menunggu verifikasi'], ['terverifikasi', 'Baris menunggu penetapan dan terbit'], ['permintaan_baru', 'Permintaan data baru (SOP-04)'], ['mitra_baru', 'Pendaftaran mitra baru (SOP-05)']].map(([k, l]) => el('div', { class: 'stat' }, el('b', { text: String(r[k]) }), l))));
+    const c = el('section', { class: 'card' }, el('h2', { text: 'Kepatuhan pemutakhiran ' + p.periode.label }), el('p', { class: 'sub', text: 'Instansi dianggap sudah memutakhirkan bila mengajukan minimal satu usulan atau mengonfirmasi tidak ada perubahan.' }));
+    c.append(K.table([{ h: 'Instansi', f: x => x.nama }, { h: 'Status', f: x => x.selesai ? K.chip('Sudah', 'ok') : K.chip('Belum', 'warn') }, { h: 'Diajukan', k: 'diajukan' }, { h: 'Draf', k: 'draft' }, { h: 'Konfirmasi tidak ada perubahan', f: x => x.konfirmasi ? K.tgl(x.konfirmasi.tanggal) : '' }], p.progres));
+    if (SUPER) c.append(el('div', { class: 'row', style: 'margin-top:12px' }, el('button', { class: 'btn g', type: 'button', text: 'Kirim pengingat sekarang ke instansi yang belum memutakhirkan', onclick: async () => { const ok = await K.dialog('Kirim pengingat', 'Pengingat dikirim ke semua PIC instansi yang belum memutakhirkan (lonceng dan surel).', [{ t: 'Batal', g: 1, v: false }, { t: 'Kirim', v: true }]); if (!ok) return; try { const h = await api('POST', 'pengingat/jalankan', { paksa: true }); K.toast('Terkirim: ' + h.terkirim.length + ' notifikasi'); } catch (e) { K.fail(e); } } })));
+    root.append(c); return root;
+  }
+  async function verifikasi() {
+    const j = await api('GET', 'usulan?status=diajukan'), root = el('div');
+    const c = el('section', { class: 'card' }, el('h2', { text: 'Verifikasi usulan (SOP-02)' }), el('p', { class: 'sub', text: 'Periksa sumber, satuan, periode, dan wilayah. Usulan tidak boleh diverifikasi oleh pengusulnya sendiri.' }));
+    if (!j.usulan.length) c.append(el('p', { text: 'Tidak ada usulan yang menunggu.' }));
+    j.usulan.forEach(u => {
+      const keys = [...new Set([...Object.keys(u.data_baru), ...Object.keys(u.data_lama || {}).filter(k => k in u.data_baru)])];
+      const diff = K.table([{ h: 'Kolom', k: 'k' }, { h: 'Sebelum', f: r => el('span', { class: 'o', text: (u.data_lama || {})[r.k] ?? '' }) }, { h: 'Sesudah', f: r => el('span', { class: 'n', text: u.data_baru[r.k] ?? '' }) }], keys.map(k => ({ k })), { cls: 'diff', kosong: u.aksi === 'hapus' ? 'Usulan menghapus baris ini.' : '' });
+      const cat = el('input', { placeholder: 'Catatan (wajib bila dikembalikan atau ditolak)', 'aria-label': 'Catatan verifikasi' });
+      const aksi = a => async () => { try { await api('POST', 'usulan/' + u.id + '/verifikasi', { aksi: a, catatan: cat.value }); K.toast('Usulan #' + u.id + ': ' + a); tabs.buka('verifikasi'); } catch (e) { K.fail(e); } };
+      c.append(el('div', { class: 'card', style: 'background:var(--bg)' }, el('b', { text: '#' + u.id + ' · ' + u.dataset + ' · ' + u.kunci + ' · ' + u.aksi }), el('div', { class: 'sub', text: u.instansi + ' · diajukan oleh ' + u.oleh + ' · ' + K.tgl(u.diajukan_pada) + ' · periode ' + u.periode }), diff, el('div', { class: 'row', style: 'margin-top:10px' }, el('div', { style: 'flex:1;min-width:220px' }, cat), el('button', { class: 'btn', type: 'button', text: 'Setujui', disabled: u.oleh === me.email, onclick: aksi('setujui') }), el('button', { class: 'btn g', type: 'button', text: 'Kembalikan', onclick: aksi('kembalikan') }), el('button', { class: 'btn r', type: 'button', text: 'Tolak', onclick: aksi('tolak') }))));
+    });
+    root.append(c); return root;
+  }
+  async function terbit() {
+    const root = el('div'), dl = (await api('GET', 'datasets')).datasets, sel = el('select', { 'aria-label': 'Dataset' }, dl.map(x => el('option', { value: x.kode, text: x.judul }))), out = el('div');
+    const ba = el('input', { placeholder: 'Nomor berita acara validasi (SOP-02)' }), tg = el('input', { type: 'date' });
+    const c = el('section', { class: 'card' }, el('h2', { text: 'Penetapan data resmi dan persetujuan terbit (SOP-02 dan SOP-03)' }), el('p', { class: 'sub', text: SUPER ? 'Pilih baris berstatus terverifikasi, isi nomor berita acara dan tanggal, lalu terbitkan. Setelah terbit, baris tampil di website publik.' : 'Hanya Super Admin (Bidang Penanaman Modal dan Diskominfosandi) yang dapat menetapkan dan menerbitkan. Halaman ini hanya dapat dibaca.' }), el('div', { class: 'row' }, el('div', { style: 'min-width:240px' }, sel)), out);
+    async function muat() {
+      out.replaceChildren(el('p', { class: 'sub', text: 'Memuat…' }));
+      const [a, b] = await Promise.all([api('GET', 'data/' + sel.value + '?limit=500&status_data=terverifikasi'), api('GET', 'data/' + sel.value + '?limit=500&terbit=ya')]);
+      const d = dl.find(x => x.kode === sel.value), cek = {};
+      const ct = [{ h: '', f: r => SUPER ? (cek[r.id] = el('input', { type: 'checkbox', style: 'width:auto', checked: true, 'aria-label': 'Pilih ' + r.kunci })) : '' }, { h: 'Baris', f: r => r.kunci }, { h: 'Isi', f: r => kv(Object.fromEntries(Object.entries(r.data).filter(([k]) => d.kolom.slice(0, 7).includes(k)))) }, { h: 'Catatan', f: r => r.hapus ? K.chip('Usulan hapus', 'bad') : '' }];
+      const tbtn = el('button', { class: 'btn', type: 'button', disabled: !SUPER || !a.baris.length, text: 'Tetapkan resmi dan terbitkan', onclick: async () => { const ids = a.baris.filter(r => cek[r.id] && cek[r.id].checked).map(r => r.id); if (!ids.length) return K.toast('Pilih minimal satu baris', true); try { const h = await api('POST', 'terbit', { dataset: sel.value, ids, nomor_ba: ba.value, tanggal_mutakhir: tg.value }); K.toast(h.terbit + ' baris terbit, ' + h.dihapus + ' dihapus' + (h.ditahan.length ? ', ' + h.ditahan.length + ' ditahan (syarat belum terpenuhi)' : '')); muat(); } catch (e) { K.fail(e); } } });
+      const tarik = r => el('button', { class: 'btn g s', type: 'button', text: 'Tarik dari website', disabled: !SUPER, onclick: async () => { const t = el('input', { placeholder: 'Alasan penarikan' }); const ok = await K.dialog('Tarik baris dari website', [el('p', { text: r.kunci }), t], [{ t: 'Batal', g: 1, v: false }, { t: 'Tarik', r: 1, v: true }]); if (!ok) return; try { await api('POST', 'tarik', { dataset: sel.value, ids: [r.id], alasan: t.value }); K.toast('Ditarik'); muat(); } catch (e) { K.fail(e); } } });
+      out.replaceChildren(el('h3', { text: 'Menunggu penetapan (' + a.total + ')' }), K.table(ct, a.baris, { kosong: 'Tidak ada baris terverifikasi.' }), SUPER ? el('div', { class: 'row', style: 'margin-top:12px' }, el('div', { style: 'flex:1;min-width:240px' }, ba), el('div', {}, tg), tbtn) : '',
+        el('h3', { text: 'Sedang tayang di website (' + b.total + ')' }), K.table([{ h: 'Baris', f: r => r.kunci }, { h: 'Status', f: r => K.stChip(r.status_data) }, { h: 'Berita acara', f: r => r.nomor_ba || '' }, { h: 'Tanggal', f: r => r.tanggal_mutakhir || '' }, { h: '', f: tarik }], b.baris));
+    }
+    sel.onchange = muat; root.append(c); await muat(); return root;
+  }
+  async function pahandep() {
+    const j = await api('GET', 'pahandep/pendaftaran'), root = el('div');
+    root.append(el('div', { class: 'secret', text: 'RAHASIA. Data pendaftar dan kontak mitra tersimpan terenkripsi dan setiap pembukaan data lengkap tercatat pada riwayat akses (UU 27/2022). Kontak hanya diserahkan kepada calon investor melalui Layanan Permintaan Data (SOP-04). Profil yang tayang di website tidak memuat NIB, modal usaha, maupun kontak.' }));
+    const buka = async n => {
+      const d = await api('GET', 'pahandep/pendaftaran/' + n), x = d.data, b = el('div');
+      b.append(K.table([{ h: 'Kolom', k: 'k' }, { h: 'Isi', k: 'v' }], Object.entries(x).map(([k, v]) => ({ k, v: String(v) }))));
+      const nibok = el('select', {}, el('option', { value: 'ya', text: 'NIB sesuai data OSS' }), el('option', { value: 'tidak', text: 'NIB belum diverifikasi' })), kbli = el('input', { placeholder: 'KBLI (opsional)' });
+      const aksi = [{ t: 'Tutup', g: 1, v: false }];
+      aksi.push({ t: 'Tandai diverifikasi', g: 1, fn: async () => { await api('POST', 'pahandep/pendaftaran/' + n + '/status', { status: 'diverifikasi' }); K.toast('Status diperbarui'); tabs.buka('pahandep'); } });
+      aksi.push({ t: 'Tolak', r: 1, fn: async () => { await api('POST', 'pahandep/pendaftaran/' + n + '/status', { status: 'ditolak' }); tabs.buka('pahandep'); } });
+      if (!d.kode_mitra && x.persetujuan_pelaku_usaha === 'ya') { b.append(el('h3', { text: 'Catat sebagai profil mitra' }), el('p', { class: 'sub', text: 'NIB, KBLI, dan hasil verifikasi NIB disimpan terenkripsi dan TIDAK tampil di website maupun berkas data publik.' }), el('label', {}, 'Hasil verifikasi NIB', nibok), el('label', {}, 'KBLI', kbli)); aksi.push({ t: 'Buat profil (masuk verifikasi kedua)', fn: async () => { const r = await api('POST', 'pahandep/profil/' + n, { nib_terverifikasi: nibok.value, kbli: kbli.value }); K.toast('Profil ' + r.kode + ' diajukan ke verifikasi petugas lain'); tabs.buka('pahandep'); } }); }
+      if (d.kode_mitra) aksi.push({ t: 'Buka kontak ' + d.kode_mitra, g: 1, fn: async () => { const k = await api('GET', 'pahandep/kontak/' + d.kode_mitra); await K.dialog('Kontak mitra ' + d.kode_mitra, [el('div', { class: 'secret', text: 'Dicatat pada riwayat akses.' }), K.table([{ h: 'Kolom', k: 'k' }, { h: 'Isi', k: 'v' }], Object.entries(k).map(([a, v]) => ({ k: a, v: String(v) })))]); return false; } });
+      K.dialog('Pendaftaran ' + n + ' (data lengkap)', b, aksi);
+    };
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Pendaftaran mitra PAHANDEP INVESTOR (SOP-05)' }), K.table([{ h: 'Nomor', k: 'nomor' }, { h: 'Usaha', k: 'nama_usaha' }, { h: 'Saluran', k: 'saluran' }, { h: 'Status', k: 'status' }, { h: 'Kode mitra', f: r => r.kode_mitra || '' }, { h: 'Tanggal', f: r => K.tgl(r.dibuat) }, { h: '', f: r => el('button', { class: 'btn g s', type: 'button', text: 'Buka data lengkap', onclick: () => buka(r.nomor).catch(K.fail) }) }], j.daftar, { kosong: 'Belum ada pendaftaran.' })));
+    return root;
+  }
+  async function permintaan() {
+    const j = await api('GET', 'permintaan'), root = el('div');
+    root.append(el('div', { class: 'secret', text: 'RAHASIA. Permintaan data memuat identitas dan kontak pemohon. Pembukaan data lengkap tercatat pada riwayat akses.' }));
+    const buka = async n => { const d = await api('GET', 'permintaan/' + n), sel = el('select', {}, ['masuk', 'diminta_ke_pic', 'disetujui_kabid', 'diserahkan', 'ditolak'].map(s => el('option', { value: s, text: s, selected: s === d.status }))); K.dialog('Permintaan ' + n, [K.table([{ h: 'Kolom', k: 'k' }, { h: 'Isi', k: 'v' }], Object.entries(d.data).map(([k, v]) => ({ k, v: String(v) }))), el('label', { style: 'margin-top:10px' }, 'Status layanan (SOP-04, paling lama 3 hari kerja)', sel)], [{ t: 'Tutup', g: 1, v: false }, { t: 'Simpan status', fn: async () => { await api('POST', 'permintaan/' + n + '/status', { status: sel.value }); K.toast('Status disimpan'); tabs.buka('permintaan'); } }]); };
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Layanan permintaan data (SOP-04)' }), K.table([{ h: 'Nomor', k: 'nomor' }, { h: 'Pemohon', k: 'nama' }, { h: 'Kategori', k: 'kategori' }, { h: 'Status', k: 'status' }, { h: 'Masuk', f: r => K.tgl(r.dibuat) }, { h: '', f: r => el('button', { class: 'btn g s', type: 'button', text: 'Buka', onclick: () => buka(r.nomor).catch(K.fail) }) }], j.daftar, { kosong: 'Belum ada permintaan.' })));
+    return root;
+  }
+  async function pengguna() {
+    const [j, w] = await Promise.all([api('GET', 'pengguna'), api('GET', 'wali')]), root = el('div');
+    const form = (u) => { const e = el('input', { value: u ? u.email : '', readonly: !!u, type: 'email' }), n = el('input', { value: u ? u.nama || '' : '' }), jb = el('input', { value: u ? u.jabatan || '' : '' }), ins = el('select', {}, j.instansi.map(i => el('option', { value: i.kode, text: i.kode + ' · ' + i.nama, selected: u && u.instansi === i.kode }))), pr = el('select', {}, ['pic', 'verifikator', 'super'].map(p => el('option', { value: p, text: { pic: 'Admin instansi (pengisi data)', verifikator: 'Admin verifikator (DPMPTSP)', super: 'Super Admin' }[p], selected: u && u.peran === p }))), ak = el('select', {}, el('option', { value: '1', text: 'Aktif' }), el('option', { value: '0', text: 'Nonaktif', selected: u && !u.aktif })), em = el('select', {}, el('option', { value: '1', text: 'Terima surel pengingat' }), el('option', { value: '0', text: 'Hanya lonceng', selected: u && !u.terima_email }));
+      K.dialog(u ? 'Ubah akun' : 'Tambah akun', [el('div', { class: 'form2' }, el('label', {}, 'Surel (sama dengan surel login login admin SIF POINT BATARA)', e), el('label', {}, 'Nama', n), el('label', {}, 'Jabatan', jb), el('label', {}, 'Instansi', ins), el('label', {}, 'Peran', pr), el('label', {}, 'Status', ak), el('label', {}, 'Surel pengingat', em))], [{ t: 'Batal', g: 1, v: false }, { t: 'Simpan', fn: async () => { await api('POST', 'pengguna', { email: e.value, nama: n.value, jabatan: jb.value, instansi: ins.value, peran: pr.value, aktif: +ak.value, terima_email: +em.value }); K.toast('Akun disimpan. Pastikan surel ini juga diizinkan pada kebijakan login admin SIF POINT BATARA.'); tabs.buka('pengguna'); } }]); };
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Akun admin' }), el('p', { class: 'sub', text: 'Admin instansi: 7 instansi pengisi data (Keputusan Bupati dan SOP). Admin verifikator: petugas DPMPTSP. Super Admin: Bidang Penanaman Modal DPMPTSP bersama Diskominfosandi. Akun hanya dapat masuk bila surelnya juga diizinkan pada login admin SIF POINT BATARA.' }), SUPER ? el('div', { class: 'row' }, el('button', { class: 'btn', type: 'button', text: 'Tambah akun', onclick: () => form(null) })) : '',
+      K.table([{ h: 'Surel', k: 'email' }, { h: 'Nama', f: u => u.nama || '' }, { h: 'Instansi', k: 'instansi' }, { h: 'Peran', k: 'peran' }, { h: 'Status', f: u => u.aktif ? K.chip('Aktif', 'ok') : K.chip('Nonaktif', 'bad') }, { h: 'Terakhir masuk', f: u => K.tgl(u.terakhir_masuk) }, { h: '', f: u => SUPER ? el('button', { class: 'btn g s', type: 'button', text: 'Ubah', onclick: () => form(u) }) : '' }], j.pengguna)));
+    const per = {}; w.aturan.forEach(a => ((per[a.dataset + '|' + a.kolom] ||= []).push(a.instansi)));
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Wali data per dataset dan kolom' }), el('p', { class: 'sub', text: 'Menentukan instansi mana yang boleh mengubah suatu dataset atau kolom. Nilai awal mengikuti lampiran SOP; Super Admin dapat menyesuaikan.' }), K.table([{ h: 'Dataset', f: r => r.d }, { h: 'Kolom', f: r => r.k }, { h: 'Wali data', f: r => r.i.join(', ') }], Object.entries(per).map(([k, i]) => ({ d: k.split('|')[0], k: k.split('|')[1], i })))));
+    return root;
+  }
+  async function riwayat() { const j = await api('GET', 'riwayat'); return el('section', { class: 'card' }, el('h2', { text: 'Riwayat tindakan dan akses' }), K.table([{ h: 'Waktu', f: r => K.tgl(r.waktu) }, { h: 'Pengguna', k: 'email' }, { h: 'Peran', k: 'peran' }, { h: 'Tindakan', k: 'aksi' }, { h: 'Dataset', f: r => r.dataset || '' }, { h: 'Objek', f: r => r.objek || '' }, { h: 'Keterangan', f: r => r.ringkas || '' }], j.riwayat)); }
+  const tabs = K.tabs(document.getElementById('nav'), [{ k: 'ringkasan', t: 'Ringkasan', fn: ringkasan }, { k: 'verifikasi', t: 'Verifikasi', fn: verifikasi }, { k: 'terbit', t: 'Penetapan dan terbit', fn: terbit }, { k: 'pahandep', t: 'PAHANDEP INVESTOR', fn: pahandep }, { k: 'permintaan', t: 'Permintaan data', fn: permintaan }, { k: 'pengguna', t: 'Akun dan wali data', fn: pengguna }, { k: 'riwayat', t: 'Riwayat', fn: riwayat }], 'ringkasan');
+})();
+</script>
+</body>
+</html>

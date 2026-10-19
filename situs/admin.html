@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Admin Instansi · SIF POINT BATARA</title>
+<link rel="stylesheet" href="admin-kit.css">
+</head>
+<body>
+<header class="top"><div class="wrap"><div><b>SIF POINT BATARA</b><small>Admin Instansi (wali data) · DPMPTSP Kabupaten Barito Utara</small></div><a class="btn g s" style="color:#fff;border-color:#fff;text-decoration:none" id="lnkPub" href="publish.html" hidden>Verifikasi dan penerbitan</a></div></header>
+<nav class="tabs" role="tablist" aria-label="Menu admin instansi"><div class="wrap" id="nav"></div></nav>
+<main class="wrap" id="main" tabindex="-1" aria-live="polite"><p class="sub">Memuat…</p></main>
+<script src="admin-kit.js"></script>
+<script>
+(async () => {
+  const { el, api } = K; let me, per, dsl;
+  const ISI = d => dsl.find(x => x.kode === d);
+  try { me = await K.mulai(); } catch (e) { return; }
+  if (me.peran !== 'pic') document.getElementById('lnkPub').hidden = false;
+  dsl = (await api('GET', 'datasets')).datasets;
+
+  const progres = async () => { per = await api('GET', 'periode'); return per; };
+  async function beranda() {
+    await progres(); const mine = per.progres.find(x => x.instansi === me.instansi);
+    const us = (await api('GET', 'usulan')).usulan, dr = us.filter(u => u.status === 'draft' || u.status === 'dikembalikan' || false);
+    const root = el('div', {}, K.periodeKartu(per));
+    const c = el('section', { class: 'card' }, el('h2', { text: me.instansi ? 'Status pemutakhiran ' + me.instansi : 'Status pemutakhiran' }));
+    if (mine) {
+      c.append(el('p', {}, mine.selesai ? K.chip('Sudah memutakhirkan', 'ok') : K.chip('Belum memutakhirkan', 'warn'), ' ', el('span', { class: 'sub', text: mine.konfirmasi ? 'Dikonfirmasi tidak ada perubahan oleh ' + mine.konfirmasi.oleh + ' pada ' + K.tgl(mine.konfirmasi.tanggal) : mine.diajukan + ' usulan diajukan, ' + mine.draft + ' draf.' })));
+      const b = el('div', { class: 'row' },
+        el('button', { class: 'btn', type: 'button', disabled: !dr.length, text: 'Ajukan semua draf (' + dr.length + ')', onclick: async () => { try { const j = await api('POST', 'usulan/ajukan', {}); K.toast(j.diajukan + ' usulan diajukan ke verifikator DPMPTSP'); tabs.buka('beranda'); } catch (e) { K.fail(e); } } }),
+        el('button', { class: 'btn g', type: 'button', text: 'Tidak ada perubahan triwulan ini', onclick: async () => { const t = el('textarea', { rows: 3, placeholder: 'Catatan (opsional)' }); const ok = await K.dialog('Konfirmasi tidak ada perubahan', [el('p', { text: 'Dengan ini Perangkat Daerah menyatakan data yang sudah ada pada SIF POINT BATARA tetap berlaku untuk ' + per.periode.label + '.' }), t], [{ t: 'Batal', g: 1, v: false }, { t: 'Konfirmasi', v: true }]); if (!ok) return; try { await api('POST', 'periode/konfirmasi', { catatan: t.value }); K.toast('Konfirmasi tercatat'); tabs.buka('beranda'); } catch (e) { K.fail(e); } } }));
+      c.append(b);
+    } else c.append(el('p', { class: 'sub', text: 'Akun ini tidak terikat pada instansi pengisi data.' }));
+    root.append(c);
+    const d = el('section', { class: 'card' }, el('h2', { text: 'Data yang menjadi kewenangan Anda' }), el('p', { class: 'sub', text: 'Anda hanya dapat mengubah kolom yang menjadi tugas Perangkat Daerah Anda menurut lampiran SOP. Perubahan masuk sebagai usulan, diverifikasi DPMPTSP, lalu diterbitkan Super Admin.' }));
+    d.append(K.table([{ h: 'Dataset', f: x => x.judul }, { h: 'Kolom yang dapat Anda ubah', f: x => x.kolom_edit.join(', ') }], dsl.map(x => x)));
+    root.append(d);
+    return root;
+  }
+  async function data() {
+    const root = el('div'); const sel = el('select', { 'aria-label': 'Dataset' }, dsl.map(x => el('option', { value: x.kode, text: x.judul }))), q = el('input', { type: 'search', placeholder: 'Cari…', 'aria-label': 'Cari' });
+    const out = el('div'); root.append(el('section', { class: 'card' }, el('h2', { text: 'Data' }), el('div', { class: 'row' }, el('div', { style: 'min-width:240px' }, sel), el('div', { style: 'min-width:200px' }, q), el('button', { class: 'btn', id: 'bTambah', type: 'button', text: 'Tambah baris' })), out));
+    async function muat() {
+      const d = ISI(sel.value); out.replaceChildren(el('p', { class: 'sub', text: 'Memuat…' }));
+      const j = await api('GET', 'data/' + sel.value + '?limit=300&q=' + encodeURIComponent(q.value));
+      const kol = d.kolom.slice(0, 5);
+      const cols = kol.map(k => ({ h: k, f: r => r.data[k] })).concat([{ h: 'Status', f: r => el('span', {}, K.stChip(r.status_data), ' ', r.terbit === 'ya' ? K.chip('Tayang', 'ok') : '', ' ', r.usulan_terbuka.length ? K.chip('Usulan ' + r.usulan_terbuka[0].status, 'info') : '') }, { h: 'Aksi', f: r => el('button', { class: 'btn g s', type: 'button', text: 'Ubah', onclick: () => form(d, r, muat) }) }]);
+      out.replaceChildren(el('p', { class: 'sub', text: j.total + ' baris. Kolom yang dapat Anda ubah: ' + (j.kolom_edit.join(', ') || '-') }), K.table(cols, j.baris));
+    }
+    function form(d, row, after) {
+      const ke = d.kolom_edit, f = {}, g = el('div', { class: 'form2' });
+      const kolom = row ? d.kolom : ke;
+      kolom.forEach(k => { const ed = ke.includes(k) && !(row && d.kunci.includes(k) && d.kode !== 'penunjang' && false); const v = row ? (row.data[k] ?? '') : ''; const long = String(v).length > 70 || ['uraian', 'keterangan', 'catatan', 'rincian', 'sumber'].includes(k); const inp = el(long ? 'textarea' : 'input', { name: k, rows: 3, value: long ? null : v, readonly: !ed }); if (long) inp.value = v; f[k] = inp; g.append(el('label', {}, k + (ed ? '' : ' (bukan kewenangan Anda)'), inp)); });
+      K.dialog(row ? 'Ubah baris: ' + row.kunci : 'Tambah baris: ' + d.judul, [el('p', { class: 'sub', text: 'Perubahan dikirim sebagai usulan (draf). Ajukan dari menu Beranda atau Usulan saya.' }), g], [{ t: 'Batal', g: 1, v: false }, { t: 'Simpan sebagai draf', fn: async () => {
+        const body = {}; ke.forEach(k => { if (!row || f[k].value !== String(row.data[k] ?? '')) body[k] = f[k].value; });
+        if (row && !Object.keys(body).length) { K.toast('Tidak ada perubahan'); return false; }
+        await api('POST', 'usulan', { dataset: d.kode, baris_id: row ? row.id : undefined, aksi: row ? 'ubah' : 'tambah', data: body }); K.toast('Draf tersimpan'); after();
+      } }]);
+    }
+    let tm; sel.onchange = muat; q.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(muat, 350); }); root.querySelector('#bTambah').onclick = () => form(ISI(sel.value), null, muat);
+    await muat(); return root;
+  }
+  async function usulan() {
+    const j = await api('GET', 'usulan'), root = el('div');
+    const cols = [{ h: '#', k: 'id' }, { h: 'Dataset', k: 'dataset' }, { h: 'Baris', k: 'kunci' }, { h: 'Aksi', k: 'aksi' }, { h: 'Perubahan', f: u => Object.entries(u.data_baru).map(([k, v]) => k + ': ' + v).join('; ') }, { h: 'Status', f: u => el('span', {}, K.stChip(u.status), u.catatan ? el('div', {}, el('small', { text: 'Catatan: ' + u.catatan })) : '') }, { h: 'Waktu', f: u => K.tgl(u.diajukan_pada || u.dibuat) },
+      { h: '', f: u => (u.status === 'draft' || u.status === 'dikembalikan') && u.oleh === me.email ? el('span', {}, el('button', { class: 'btn s', type: 'button', text: 'Ajukan', onclick: async () => { try { await api('POST', 'usulan/ajukan', { ids: [u.id] }); K.toast('Diajukan'); tabs.buka('usulan'); } catch (e) { K.fail(e); } } }), ' ', el('button', { class: 'btn g s', type: 'button', text: 'Hapus', onclick: async () => { try { await api('DELETE', 'usulan/' + u.id); tabs.buka('usulan'); } catch (e) { K.fail(e); } } })) : '' }];
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Usulan saya' }), el('p', { class: 'sub', text: 'Alur: draf, diajukan, diverifikasi DPMPTSP, lalu ditetapkan dan diterbitkan Super Admin. Usulan yang dikembalikan dapat diubah dan diajukan lagi.' }), K.table(cols, j.usulan, { kosong: 'Belum ada usulan.' })));
+    return root;
+  }
+  async function mitra() {
+    const root = el('div'); root.append(el('div', { class: 'secret', text: 'Data pendaftar PAHANDEP INVESTOR memuat data pribadi (UU 27/2022). Hanya nama usaha dan status yang tampil di sini; NIB, modal, dan kontak hanya dapat dibuka petugas verifikator DPMPTSP.' }));
+    const F = ['nama_usaha:Nama usaha', 'bentuk_usaha:Bentuk usaha (Perorangan/UD/CV/PT/Koperasi/BUMDes)', 'nib:NIB (13 digit)', 'kbli:KBLI (opsional)', 'sektor:Sektor', 'produk_komoditas:Produk/komoditas', 'kapasitas:Kapasitas', 'kecamatan:Kecamatan', 'desa:Desa/kelurahan', 'skala_usaha:Skala usaha', 'kebutuhan_kemitraan:Kebutuhan kemitraan', 'uraian_kemitraan:Uraian kemitraan', 'modal_usaha_rp:Modal usaha (Rp)', 'nama_penanggung_jawab:Nama penanggung jawab', 'jabatan:Jabatan', 'telepon:Telepon/WhatsApp', 'surel:Surel', 'alamat:Alamat usaha'].map(s => s.split(':'));
+    const inp = {}, g = el('div', { class: 'form2' }); F.forEach(([k, l]) => { inp[k] = el('input', { name: k }); g.append(el('label', {}, l, inp[k])); });
+    const cek = el('input', { type: 'checkbox', style: 'width:auto' }), bukti = el('input', { placeholder: 'Bukti persetujuan (mis. formulir bertanda tangan, tanggal)' });
+    const sim = el('button', { class: 'btn', type: 'button', text: 'Catat pendaftaran dan teruskan ke DPMPTSP', onclick: async () => { const b = {}; F.forEach(([k]) => b[k] = inp[k].value); b.persetujuan = cek.checked; b.bukti_persetujuan = bukti.value; try { const j = await api('POST', 'pahandep/pendaftaran', b); K.toast('Tercatat: ' + j.nomor); tabs.buka('mitra'); } catch (e) { K.fail(e); } } });
+    const j = await api('GET', 'pahandep/pendaftaran');
+    root.append(el('section', { class: 'card' }, el('h2', { text: 'Pendaftaran mitra diterima instansi Anda' }), el('p', { class: 'sub', text: 'SOP-05: pendaftaran yang diterima Disdagrin atau Disnakertranskop UKM diteruskan kepada DPMPTSP untuk verifikasi NIB melalui OSS.' }), g, el('label', {}, el('span', {}, cek, ' Pelaku usaha menyetujui profil usahanya ditampilkan (kontak tidak ditampilkan)')), el('label', {}, 'Bukti persetujuan', bukti), sim),
+      el('section', { class: 'card' }, el('h3', { text: 'Daftar' }), K.table([{ h: 'Nomor', k: 'nomor' }, { h: 'Usaha', k: 'nama_usaha' }, { h: 'Sektor', k: 'sektor' }, { h: 'Kecamatan', k: 'kecamatan' }, { h: 'Status', k: 'status' }, { h: 'Tanggal', f: r => K.tgl(r.dibuat) }], j.daftar, { kosong: 'Belum ada pendaftaran.' })));
+    return root;
+  }
+  const defs = [{ k: 'beranda', t: 'Beranda', fn: beranda }, { k: 'data', t: 'Data', fn: data }, { k: 'usulan', t: 'Usulan saya', fn: usulan }];
+  if (['DISDAGRIN', 'DISNAKERTRANSKOP'].includes(me.instansi)) defs.push({ k: 'mitra', t: 'PAHANDEP INVESTOR', fn: mitra });
+  const tabs = K.tabs(document.getElementById('nav'), defs, 'beranda');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /publish.html
+Disallow: /status.html
+Disallow: /api/
+
+Sitemap: https://sifpointbatara.id/sitemap.xml

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Halaman Tim Teknis · SIF POINT BATARA</title>
+<script src="data-config.js"></script>
+<style>
+:root{--teal:#0F6B5C;--teal2:#E3F3EF;--ink:#1F2A28;--mut:#5B6B67;--line:#D5DFDB;--amb:#F4B740;--ambt:#8A5D00;--red:#B23A2E;--grn:#1F7A4D;--blu:#2C62C9;--bg:#F5F8F7}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:"Plus Jakarta Sans",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{background:linear-gradient(110deg,#0B5A4D,#0F6B5C 60%,#14806D);color:#fff}
+header .wrap{padding:22px 16px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+header b{font-size:20px;letter-spacing:.02em}header small{display:block;color:#CFEAE3;font-size:13px}
+.lock{margin-left:auto;background:var(--amb);color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.08em;border-radius:999px;padding:6px 12px}
+.warn{background:#FDECEA;border:1px solid #F0B2AA;color:#7A231B;border-radius:12px;padding:12px 16px;margin:18px 0 0;font-size:14px}
+.warn b{color:var(--red)}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:18px 0}
+h2{font-size:18px;margin:0 0 4px;color:var(--teal)}
+.sub{color:var(--mut);font-size:13.5px;margin:0 0 12px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:720px}
+th,td{padding:9px 11px;text-align:left;vertical-align:top;border-bottom:1px solid #E6ECEA}
+th{background:var(--teal);color:#fff;font-size:12px;letter-spacing:.04em;font-weight:700}
+tr:last-child td{border-bottom:0}
+td small{color:var(--mut)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.ok{color:var(--grn);background:#E5F5EC}.chip.warn{color:var(--ambt);background:#FFF5DB}.chip.info{color:var(--blu);background:#E3ECFB}.chip.bad{color:var(--red);background:#FDECEA}
+.note{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px;font-size:14px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.box{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#FBFCFC}
+.box h3{margin:0 0 6px;font-size:14px}
+.box p{margin:0;font-size:14px}
+ol.st{margin:0;padding-left:22px}ol.st li{margin:0 0 8px}ol.st small{display:block;color:var(--mut)}
+ul.ck{list-style:none;margin:0;padding:0}ul.ck li{padding:6px 0 6px 28px;position:relative;border-bottom:1px dashed #E6ECEA}
+ul.ck li:before{content:"";position:absolute;left:2px;top:9px;width:14px;height:14px;border:2px solid var(--teal);border-radius:3px}
+code{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#EEF2F1;border-radius:4px;padding:1px 5px}
+footer{color:var(--mut);font-size:12.5px;padding:8px 0 28px}
+@media (max-width:760px){.g2{grid-template-columns:1fr}.lock{margin-left:0}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div><b>SIF POINT BATARA · Halaman Tim Teknis</b><small>Internal DPMPTSP Kabupaten Barito Utara · status data, penerapan SOP, dan lembar periksa</small></div><span class="lock">INTERNAL</span></div></header>
+<main class="wrap">
+<div class="warn" id="accNote"><b>Halaman internal.</b> Halaman ini tidak ditautkan dari menu website, tetapi tetap dapat dibuka oleh siapa pun yang mengetahui alamatnya sampai dilindungi <b>login admin SIF POINT BATARA</b>. Jangan menambahkan tautan Google Sheets kerja, data pribadi, atau kata sandi ke halaman ini sebelum login admin SIF POINT BATARA aktif.</div>
+
+<section>
+<h2>Status data yang tampil di website</h2>
+<p class="sub">Dihitung otomatis dari tab Google Sheets yang tautannya diisi pada <code>data-config.js</code>, dengan aturan yang sama seperti website publik.</p>
+<div class="note" id="stNote"></div>
+<div class="tbl"><table><thead><tr><th>Data</th><th>Perangkat Daerah</th><th>Sumber yang tampil</th><th>Status</th><th>Pemutakhiran</th></tr></thead><tbody id="stBody"><tr><td colspan="5">Memuat…</td></tr></tbody></table></div>
+<p class="sub" style="margin-top:10px">Status data: <b>sementara</b> (diterima, SOP-01), <b>terverifikasi</b> (lolos verifikasi, SOP-02), dan <b>resmi</b> (ditetapkan Kepala DPMPTSP berdasarkan berita acara validasi, SOP-02). Data hanya terbit setelah publikasinya disetujui Kepala DPMPTSP (SOP-03). Pita "Data dalam proses validasi" di Beranda, Lokasi, Sektor, Komoditas, Peta GIS, dan Pahandep Investor hilang otomatis bila seluruh baris berstatus <b>Data resmi</b>.</p>
+</section>
+
+<section>
+<h2>Pemeriksaan sumber data</h2>
+<p class="sub">Keadaan setiap tautan pada <code>data-config.js</code>. Tautan harus diawali <code>https://</code> dan berupa tab Google Sheets yang dipublikasikan ke web dalam format CSV.</p>
+<div class="tbl"><table><thead><tr><th>Kunci di data-config.js</th><th>Tab Google Sheets</th><th>Tautan</th><th>Hasil pembacaan</th></tr></thead><tbody id="cfgBody"></tbody></table></div>
+</section>
+
+<section>
+<h2>Penerapan SOP di website</h2>
+<p class="sub">Catatan teknis pelaksanaan SOP-01 sampai SOP-05 pada SIF POINT BATARA (Lampiran II–VI Keputusan Bupati Barito Utara tentang SOP Pengelolaan Data Potensi Investasi melalui SIF POINT BATARA).</p>
+<div class="g2" id="apBox"></div>
+</section>
+
+<section>
+<h2>Langkah kerja sampai "Data resmi"</h2>
+<p class="sub">Urutan mengikuti SOP-01 sampai SOP-03.</p>
+<ol class="st">
+<li><b>PIC Data Perangkat Daerah</b> mengisi data dan kolom metadata pada tab miliknya; <code>status_data</code> = sementara, kolom <code>terbit</code> dikosongkan.<small>SOP-01 · 5 hari kerja</small></li>
+<li><b>Bidang Layanan Informasi Data DPMPTSP</b> memeriksa kelengkapan isian dan mencatat penerimaan di tab Log_Penerimaan. Bila tidak lengkap, dikembalikan kepada PIC data.<small>SOP-01 · 1 hari</small></li>
+<li><b>Bidang Penanaman Modal</b> melakukan verifikasi silang (sumber, satuan, periode, wilayah). Bila sesuai, <code>status_data</code> diubah menjadi terverifikasi.<small>SOP-02 · 2 hari</small></li>
+<li><b>Bapperida dan BPS Kabupaten</b> menyelaraskan data dan memberikan rekomendasi metadata.<small>SOP-02 · masing-masing 1 hari</small></li>
+<li><b>Tim Teknis</b> menyusun berita acara validasi data; nomornya dicatat.<small>SOP-02 · 1 hari</small></li>
+<li><b>Kepala DPMPTSP</b> menetapkan data resmi; admin mengisi <code>status_data</code> = resmi, <code>nomor_ba</code>, dan <code>tanggal_mutakhir</code> (format 2027-01-10 atau 10/01/2027).<small>SOP-02 · 1 hari</small></li>
+<li><b>Kepala DPMPTSP</b> menyetujui publikasi; admin mengisi <code>terbit</code> = ya pada baris yang disetujui.<small>SOP-03 · 1 hari</small></li>
+<li><b>Admin website</b> memastikan tautan CSV tab tersebut ada di <code>data-config.js</code>, lalu memeriksa tabel di atas berubah menjadi "Data resmi".<small>SOP-03</small></li>
+</ol>
+</section>
+
+<section>
+<h2>Lembar periksa sebelum menyetujui terbit</h2>
+<ul class="ck">
+<li>Judul kolom dan nama tab tidak diubah.</li>
+<li>Kolom metadata terisi: sumber, periode, satuan, wilayah, perangkat_daerah.</li>
+<li>Status ditulis salah satu dari: sementara, terverifikasi, resmi.</li>
+<li>Kolom terbit diisi "ya" hanya setelah persetujuan Kepala DPMPTSP.</li>
+<li>Angka memakai koma desimal (contoh 1,5); tanggal 2027-01-10 atau 10/01/2027.</li>
+<li>Tab Log_Penerimaan, Log_Permintaan_Data, Log_Pendaftaran_Mitra, dan Kontak_Mitra tidak dipublikasikan (memuat data pribadi, UU Nomor 27 Tahun 2022).</li>
+<li>Profil mitra PAHANDEP INVESTOR hanya terbit bila kolom terbit = ya dan persetujuan_pelaku_usaha = ya; nomor NIB, modal usaha, dan kontak hanya dicatat di tab Kontak_Mitra.</li>
+<li>Pendaftaran mitra (SOP-05): setiap pendaftaran dari Dashboard, Disdagrin, Disnakertranskop UKM, atau DPMPTSP dicatat di tab Log_Pendaftaran_Mitra dengan nomor referensi PI-…; profil yang lolos verifikasi diisi ke Mitra_Usaha (<code>status_data</code> = sementara) lalu diteruskan ke SOP-02 dan SOP-03. Total paling lama 7 hari kerja.</li>
+</ul>
+</section>
+
+<section>
+<h2>Tautan kerja Tim Teknis</h2>
+<p class="sub">Tautan Google Sheets kerja, folder arsip, dan formulir internal ditambahkan di sini setelah halaman ini dilindungi login admin SIF POINT BATARA.</p>
+</section>
+</main>
+<footer class="wrap">SIF POINT BATARA · DPMPTSP Kabupaten Barito Utara · halaman internal, tidak untuk dipublikasikan.</footer>
+<script>
+function SIF_CSV(t){const rows=[];let r=[],f='',q=false;t=t.replace(/^﻿/,'');
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){r.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;r.push(f);rows.push(r);r=[];f=''}else f+=c}
+  if(f!==''||r.length){r.push(f);rows.push(r)}
+  const h=(rows.shift()||[]).map(x=>x.trim().toLowerCase().replace(/\s+/g,'_'));
+  return rows.filter(x=>x.some(v=>v.trim()!=='')).map(x=>Object.fromEntries(h.map((k,i)=>[k,(x[i]||'').trim()])));}
+const SIF_YA=/^(ya|y|yes|true|1|terbit|disetujui|setuju)$/i;
+function SIF_DATE(v){v=String(v||'').trim();let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return new Date(+m[1],m[2]-1,+m[3]);
+  m=v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);if(m)return new Date(+m[3],m[2]-1,+m[1]);return null}
+function SIF_META1(k,v){const has=k!=='kontak'&&v.length>0&&('terbit' in v[0]);const rows=has?v.filter(r=>SIF_YA.test(String(r.terbit||'').trim())):v;
+  let last=null;const ba=new Set(),st={};
+  rows.forEach(r=>{const d=SIF_DATE(r.tanggal_mutakhir);if(d&&(!last||d>last))last=d;const b=String(r.nomor_ba||'').trim();if(b)ba.add(b);const s=String(r.status_data||'').trim().toLowerCase();if(s)st[s]=(st[s]||0)+1;});
+  return {rows,total:v.length,terbit:rows.length,filter:has,last,ba:[...ba],st};}
+
+(function(){
+  const $=q=>document.querySelector(q),escH=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],tglID=d=>d.getDate()+' '+BLN[d.getMonth()]+' '+d.getFullYear();
+  const chip=(c,t)=>`<span class="chip ${c}"><span class="dot"></span>${t}</span>`;
+  const DS=[
+      {k:'peluang',n:'Peluang investasi (katalog)',pd:'DPMPTSP (Bidang Penanaman Modal)',def:'Peta Potensi Kabupaten Barito Utara, DPMPTSP Provinsi Kalimantan Tengah'},
+      {k:'titik',n:'Titik lokasi peluang',pd:'DPMPTSP; Bapperida (data spasial)',def:'Kompilasi DPMPTSP, diselaraskan dengan RTRW 2019–2039 dan RDTR Muara Teweh'},
+      {k:'pabrik',n:'Lokasi fasilitas hilirisasi',pd:'DPMPTSP (Bidang Penanaman Modal)',def:'Kompilasi DPMPTSP, diselaraskan dengan RTRW 2019–2039 dan RDTR Muara Teweh'},
+      {k:'kecamatan',n:'Profil kecamatan',pd:'Perangkat Daerah terkait; BPS',def:'Data bawaan website (kompilasi DPMPTSP)'},
+      {k:'produksi',n:'Produksi komoditas per kecamatan',pd:'Dinas Pertanian; BPS',def:'Kecamatan Dalam Angka 2026, BPS Kabupaten Barito Utara (hortikultura tahun 2025)'},
+      {k:'mitra',n:'Mitra pelaku usaha (PAHANDEP INVESTOR)',pd:'Disdagrin; Disnakertranskop UKM; DPMPTSP (Bidang Layanan Informasi Data; data perizinan berusaha)',def:null},
+      {k:'realisasi',n:'Realisasi investasi (LKPM)',pd:'DPMPTSP (Bidang Layanan Informasi Data, Pengawasan dan Pelaporan)',def:'Paparan Laporan Realisasi Investasi Bidang Penanaman Modal (LKPM Juli 2026)'}];
+  const TAB={peluang:'Peluang',titik:'Titik_Peluang',pabrik:'Pabrik',kecamatan:'Kecamatan',kontak:'Kontak',produksi:'Produksi_Komoditas',realisasi:'Realisasi',mitra:'Mitra_Usaha'};
+  const C=window.SIF_CFG||{},M={},OVR={},ERR={};
+  const keys=Object.keys(TAB).filter(k=>/^(https:\/\/|\/api\/public\/)/.test(C[k]||''));
+  Promise.all(keys.map(k=>fetch(C[k],{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(t=>[k,SIF_CSV(t)]).catch(e=>{ERR[k]=e.message||'gagal';return [k,null]})))
+  .then(a=>{a.forEach(([k,v])=>{if(!v||!v.length)return;const m=SIF_META1(k,v);M[k]=m;if(m.rows.length)OVR[k]=m.rows});render();},()=>render());
+  function render(){
+    let anyOff=false;
+    $('#stBody').innerHTML=DS.map(x=>{const m=M[x.k],used=!!OVR[x.k];let src,st,up='–';
+      if(m&&used){const ks=Object.keys(m.st),allR=ks.length&&ks.every(s=>s==='resmi');
+        src='Google Sheets data SIF POINT BATARA'+(m.filter?`: ${m.terbit} dari ${m.total} baris disetujui terbit`:'');
+        st=ks.length?chip(allR?'ok':'warn',allR?'Data resmi':'Belum seluruhnya data resmi')+`<small style="display:block;margin-top:4px">${ks.map(s=>escH(s)+' '+m.st[s]).join(', ')}</small>`:chip('info','Status data belum diisi');
+        if(!allR)anyOff=true;
+        up=(m.last?tglID(m.last):'–')+(m.ba.length?`<small style="display:block">BA: ${escH(m.ba.join('; '))}</small>`:'');}
+      else{anyOff=true;
+        if(m&&!used)src=`Data bawaan website; belum ada baris yang disetujui terbit dari ${m.total} baris di Google Sheets`;
+        else src=x.def||'Belum tersedia';
+        st=x.k==='produksi'?chip('warn','Menunggu data Dinas Pertanian (SOP-01)'):x.k==='mitra'?chip('warn','Menunggu pendaftaran mitra (SOP-05)'):x.k==='realisasi'?chip('info','Data LKPM'):chip('warn','Kompilasi awal, menunggu penetapan data resmi (SOP-02)');}
+      return `<tr><td>${x.n}</td><td>${x.pd}</td><td>${src}</td><td>${st}</td><td>${up}</td></tr>`}).join('');
+    $('#stNote').innerHTML=anyOff?chip('warn','Proses penetapan data resmi berjalan')+'<span>Pita "Data dalam proses validasi" tampil untuk pengunjung.</span>':chip('ok','Data resmi')+'<span>Seluruh data yang tampil telah ditetapkan sebagai data resmi dan disetujui terbit. Pita keterangan tidak tampil untuk pengunjung.</span>';
+    $('#cfgBody').innerHTML=Object.keys(TAB).map(k=>{const u=String(C[k]||'').trim(),m=M[k];let r;
+      if(!u)r=chip('info','Belum diisi')+'<small style="display:block;margin-top:4px">Website memakai data bawaan.</small>';
+      else if(!/^(https:\/\/|\/api\/public\/)/.test(u))r=chip('bad','Tautan tidak valid')+'<small style="display:block;margin-top:4px">Harus diawali https:// atau /api/public/</small>';
+      else if(ERR[k])r=chip('bad','Gagal dibaca')+`<small style="display:block;margin-top:4px">${escH(ERR[k])}. Periksa apakah tab sudah dipublikasikan ke web sebagai CSV.</small>`;
+      else if(m)r=chip('ok','Terbaca')+`<small style="display:block;margin-top:4px">${m.total} baris${m.filter?`, ${m.terbit} disetujui terbit`:''}</small>`;
+      else r=chip('warn','Kosong')+'<small style="display:block;margin-top:4px">Tab terbaca tetapi tidak berisi baris data.</small>';
+      return `<tr><td><code>${k}</code></td><td>${TAB[k]}</td><td>${u?'Terpasang':'–'}</td><td>${r}</td></tr>`}).join('')
+      +['batas_kecamatan','batas_desa'].map(k=>{const u=String(C[k]||'').trim();return `<tr><td><code>${k}</code></td><td>Berkas GeoJSON di folder website</td><td>${u?escH(u):'–'}</td><td>${u?chip('info','Terpasang; periksa pada Peta GIS'):chip('info','Belum diisi')}</td></tr>`}).join('');
+    const AP=[["SOP-01", "Pengumpulan dan penyerahan data", "Formulir digital berupa tab Google Sheets data SIF POINT BATARA dengan kolom metadata (sumber, periode, satuan, wilayah, perangkat daerah); log penerimaan dicatat pada tab Log_Penerimaan."], ["SOP-02", "Verifikasi dan validasi data", "Kolom status_data (sementara, terverifikasi, resmi) dan nomor_ba pada setiap tab data; status tampil pada tabel di atas."], ["SOP-03", "Penyajian, publikasi, dan pemutakhiran", "Kolom terbit: baris data tampil di website hanya setelah diisi \"ya\" atas persetujuan publikasi Kepala DPMPTSP; tanggal pemutakhiran dicatat pada kolom tanggal_mutakhir."], ["SOP-04", "Layanan permintaan data bagi calon investor", "Formulir pada menu Layanan Data, Permintaan Data; log layanan dicatat pada tab Log_Permintaan_Data."], ["SOP-05", "Pendaftaran mitra pelaku usaha lokal PAHANDEP INVESTOR", "Formulir pada menu Pahandep Investor, Daftarkan usaha; log pendaftaran dicatat pada tab Log_Pendaftaran_Mitra, profil pada tab Mitra_Usaha, dan kontak pada tab Kontak_Mitra (Log_Pendaftaran_Mitra dan Kontak_Mitra tidak dipublikasikan)."]];
+    $('#apBox').innerHTML=AP.map(([n,t,a])=>`<div class="box"><h3>${n} · ${t}</h3><p>${a}</p></div>`).join('');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/handler.js": { "includeFiles": "certs/isrgrootx1.pem" },
+    "api/cron.js": { "includeFiles": "certs/isrgrootx1.pem" }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/handler?path=:path*" }
+  ],
+  "crons": [
+    { "path": "/api/cron", "schedule": "0 1 * * *" }
+  ],
+  "headers": [
+    { "source": "/(admin|publish|status|login).html", "headers": [
+      { "key": "Cache-Control", "value": "no-store" },
+      { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+      { "key": "X-Content-Type-Options", "value": "nosniff" }
+    ] },
+    { "source": "/api/(.*)", "headers": [
+      { "key": "Cache-Control", "value": "no-store" },
+      { "key": "X-Content-Type-Options", "value": "nosniff" }
+    ] }
+  ]
+}
