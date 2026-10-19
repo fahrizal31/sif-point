@@ -59,7 +59,6 @@ export async function authenticate(request, env) {
     const credential = await env.DB.prepare('SELECT versi FROM kredensial WHERE email=?').bind(email).first();
     if (!session || !credential || Number(session.version) !== Number(credential.versi)) throw new HttpError(401, 'Sesi berakhir. Masuk kembali melalui halaman login.');
   }
-  await env.DB.prepare('UPDATE pengguna SET terakhir_masuk=? WHERE email=?').bind(nowIso(), email).run();
   return u;
 }
 export function csrf(request) {

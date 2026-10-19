@@ -43,6 +43,7 @@ export async function handleLogin(request, env, action) {
   const row = await env.DB.prepare('SELECT k.email,k.password_hash,k.versi,p.aktif FROM kredensial k JOIN pengguna p ON p.email=k.email WHERE k.username=?').bind(username).first();
   const ok = await verifyPassword(password, row?.password_hash || DUMMY_HASH);
   if (!row || !row.aktif || !ok) throw new HttpError(401, INVALID);
+  await env.DB.prepare('UPDATE pengguna SET terakhir_masuk=? WHERE email=?').bind(nowIso(), row.email).run();
   const token = await makeSession(env, row.email, Number(row.versi));
   return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'set-cookie': sessionCookie(token, secure) } });
 }

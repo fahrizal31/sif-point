@@ -22,11 +22,14 @@ try {
   assert.equal((await post('auth/login', { username: 'superadmin', password: 'password-salah-2026' })).status, 401);
   const login = await post('auth/login', { username: 'superadmin', password: 'password-kuat-awal-2026' });
   assert.equal(login.status, 200);
+  const lastLogin = (await DB.prepare('SELECT terakhir_masuk FROM pengguna WHERE email=?').bind('super@contoh.go.id').first()).terakhir_masuk;
+  assert.ok(lastLogin, 'waktu terakhir masuk tercatat setelah login');
   const cookie = login.headers.get('set-cookie').split(';')[0];
   assert.equal(await readSession(env, cookie), 'super@contoh.go.id');
   const me = await handle(new Request('https://example.com/api/me', { headers: { cookie } }), env);
   assert.equal(me.status, 200);
   assert.equal((await me.json()).peran, 'super');
+  assert.equal((await DB.prepare('SELECT terakhir_masuk FROM pengguna WHERE email=?').bind('super@contoh.go.id').first()).terakhir_masuk, lastLogin, 'membuka API tidak mengubah waktu login');
   assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', password: 'password-petugas-2026', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
   assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', surel_notifikasi: 'alamat-baru@contoh.go.id', username: 'petugas', password: '', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
   const listed = await handle(new Request('https://example.com/api/pengguna', { headers: { cookie } }), env);
