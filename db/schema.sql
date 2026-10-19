@@ -1,7 +1,7 @@
 -- SIF POINT BATARA: skema basis data (Cloudflare D1 / SQLite)
 CREATE TABLE IF NOT EXISTS instansi (kode TEXT PRIMARY KEY, nama TEXT NOT NULL, peran_sop TEXT, admin_data INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS pengguna (
-  email TEXT PRIMARY KEY, nama TEXT, jabatan TEXT, instansi TEXT REFERENCES instansi(kode),
+  email TEXT PRIMARY KEY, surel_notifikasi TEXT, nama TEXT, jabatan TEXT, instansi TEXT REFERENCES instansi(kode),
   peran TEXT NOT NULL CHECK (peran IN ('pic','verifikator','super')),
   aktif INTEGER NOT NULL DEFAULT 1, terima_email INTEGER NOT NULL DEFAULT 1, dibuat TEXT NOT NULL, terakhir_masuk TEXT);
 CREATE TABLE IF NOT EXISTS kredensial (email TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, versi INTEGER NOT NULL DEFAULT 1, diubah TEXT NOT NULL);

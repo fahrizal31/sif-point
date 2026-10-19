@@ -32,6 +32,8 @@ node --env-file=.env.local db/setup-password-admin.mjs ../ADMIN_LOGIN_AWAL.json
 
 Skrip membuat tabel kredensial bila belum ada dan mengaktifkan Super Admin awal. Skrip menolak menimpa password jika akun sudah ada. Setelah login, ganti password dari tombol **Ganti password** dan hapus berkas password awal.
 
+Pada database yang sudah ada, jalankan `node --env-file=.env.local db/migrate-notification-email.mjs` sekali agar Super Admin dapat mengganti alamat surel notifikasi akun. Perubahan alamat tersebut tidak mengubah username, sesi, atau riwayat internal akun.
+
 ## Variabel Vercel
 
 Pada proyek Vercel, buka **Settings → Environment Variables**. Isi untuk **Production** (dan Preview bila perlu):

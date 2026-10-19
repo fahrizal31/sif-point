@@ -5,6 +5,7 @@ import { readSession } from '../src/lib/session.js';
 import { mysqlSql } from '../src/lib/tidb.js';
 import { forwardApiRequest } from '../api/handler.js';
 import { hashPassword } from '../src/lib/password.js';
+import { notify } from '../src/lib/notif.js';
 
 const DB = bukaDb(':memory:', ['db/schema.sql', 'db/seed.sql']);
 const env = { DB, AUTH_MODE: 'session', PII_KEY: Buffer.alloc(32, 7).toString('base64'), SESSION_SECRET: 'local-test-secret-at-least-32-characters' };
@@ -27,6 +28,15 @@ try {
   assert.equal(me.status, 200);
   assert.equal((await me.json()).peran, 'super');
   assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', password: 'password-petugas-2026', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
+  assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', surel_notifikasi: 'alamat-baru@contoh.go.id', username: 'petugas', password: '', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
+  const listed = await handle(new Request('https://example.com/api/pengguna', { headers: { cookie } }), env);
+  assert.equal((await listed.json()).pengguna.find(u => u.username === 'petugas').surel_notifikasi, 'alamat-baru@contoh.go.id');
+  const oldFetch = globalThis.fetch;
+  let deliveredTo;
+  env.RESEND_API_KEY = 'test'; env.MAIL_FROM = 'test@example.com';
+  globalThis.fetch = async (_url, options) => { deliveredTo = JSON.parse(options.body).to[0]; return new Response('{}', { status: 200 }); };
+  try { await notify(env, ['petugas@contoh.go.id'], { judul: 'Uji', isi: 'Uji alamat baru' }); } finally { globalThis.fetch = oldFetch; delete env.RESEND_API_KEY; delete env.MAIL_FROM; }
+  assert.equal(deliveredTo, 'alamat-baru@contoh.go.id');
   assert.equal((await post('auth/login', { username: 'petugas', password: 'password-petugas-2026' })).status, 200);
   assert.equal((await post('pengguna', { email: 'petugas@contoh.go.id', username: 'petugas', password: 'password-petugas-baru-2026', nama: 'Petugas', instansi: 'DISTAN', peran: 'pic' }, cookie)).status, 200);
   assert.equal((await post('auth/login', { username: 'petugas', password: 'password-petugas-2026' })).status, 401);

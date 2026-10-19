@@ -342,14 +342,19 @@ async function permintaan(env, user, request, path) {
 async function pengguna(env, user, request, path) {
   if (request.method === 'GET') {
     if (!isVerif(user)) bad('Tidak berwenang', 403);
-    return { pengguna: (await env.DB.prepare('SELECT p.email,p.nama,p.jabatan,p.instansi,p.peran,p.aktif,p.terima_email,p.terakhir_masuk,k.username FROM pengguna p LEFT JOIN kredensial k ON k.email=p.email ORDER BY p.peran,p.instansi,p.email').all()).results, instansi: INSTANSI.map(i => ({ kode: i[0], nama: i[1], peran_sop: i[2], admin_data: i[3] })) };
+    return { pengguna: (await env.DB.prepare('SELECT p.email,COALESCE(p.surel_notifikasi,p.email) surel_notifikasi,p.nama,p.jabatan,p.instansi,p.peran,p.aktif,p.terima_email,p.terakhir_masuk,k.username FROM pengguna p LEFT JOIN kredensial k ON k.email=p.email ORDER BY p.peran,p.instansi,p.email').all()).results, instansi: INSTANSI.map(i => ({ kode: i[0], nama: i[1], peran_sop: i[2], admin_data: i[3] })) };
   }
   if (!isSuper(user)) bad('Hanya Super Admin yang mengelola akun', 403);
   const b = await bodyJson(request), email = str(b.email, 200).toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) bad('Surel tidak valid');
+  const current = await env.DB.prepare('SELECT surel_notifikasi FROM pengguna WHERE email=?').bind(email).first();
+  const surel = b.surel_notifikasi === undefined ? (current?.surel_notifikasi || email) : str(b.surel_notifikasi, 255).toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(surel)) bad('Surel notifikasi tidak valid');
+  const owner = await env.DB.prepare('SELECT email FROM pengguna WHERE (email=? OR surel_notifikasi=?) AND email<>?').bind(surel, surel, email).first();
+  if (owner) bad('Surel notifikasi sudah digunakan akun lain', 409);
   // Opsional: batasi akun admin pada domain surel dinas (variabel EMAIL_DOMAIN_DINAS, mis. "baritoutarakab.go.id"; pisahkan koma bila lebih dari satu).
   const dom = String(env.EMAIL_DOMAIN_DINAS || '').toLowerCase().split(/[\s,;]+/).filter(Boolean);
-  if (dom.length && !dom.some(x => email.endsWith('@' + x))) bad('Surel harus berakhiran ' + dom.map(x => '@' + x).join(' atau ') + ' (surel dinas)');
+  if (dom.length && !dom.some(x => surel.endsWith('@' + x))) bad('Surel harus berakhiran ' + dom.map(x => '@' + x).join(' atau ') + ' (surel dinas)');
   if (!PERAN.includes(b.peran)) bad('Peran harus pic, verifikator, atau super');
   if (!SEMUA_INSTANSI.includes(b.instansi)) bad('Instansi tidak dikenal');
   if (b.peran === 'pic' && !INSTANSI_ADMIN.includes(b.instansi)) bad('Admin instansi hanya untuk 7 instansi pengisi data');
@@ -369,15 +374,15 @@ async function pengguna(env, user, request, path) {
     if (taken && taken.email !== email) bad('Username sudah digunakan', 409);
     if (password) hash = await hashPassword(password);
   }
-  await env.DB.prepare('INSERT INTO pengguna (email,nama,jabatan,instansi,peran,aktif,terima_email,dibuat) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET nama=excluded.nama,jabatan=excluded.jabatan,instansi=excluded.instansi,peran=excluded.peran,aktif=excluded.aktif,terima_email=excluded.terima_email')
-    .bind(email, str(b.nama, 120), str(b.jabatan, 120), b.instansi, b.peran, aktif, b.terima_email === 0 ? 0 : 1, nowIso()).run();
+  await env.DB.prepare('INSERT INTO pengguna (email,surel_notifikasi,nama,jabatan,instansi,peran,aktif,terima_email,dibuat) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET surel_notifikasi=excluded.surel_notifikasi,nama=excluded.nama,jabatan=excluded.jabatan,instansi=excluded.instansi,peran=excluded.peran,aktif=excluded.aktif,terima_email=excluded.terima_email')
+    .bind(email, surel, str(b.nama, 120), str(b.jabatan, 120), b.instansi, b.peran, aktif, b.terima_email === 0 ? 0 : 1, nowIso()).run();
   if (env.AUTH_MODE === 'session') {
     if (existing) {
       if (hash) await env.DB.prepare('UPDATE kredensial SET username=?,password_hash=?,versi=versi+1,diubah=? WHERE email=?').bind(username, hash, nowIso(), email).run();
       else if (username !== existing.username) await env.DB.prepare('UPDATE kredensial SET username=? WHERE email=?').bind(username, email).run();
     } else await env.DB.prepare('INSERT INTO kredensial (email,username,password_hash,versi,diubah) VALUES (?,?,?,1,?)').bind(email, username, hash, nowIso()).run();
   }
-  await catat(env, user, 'pengguna', null, email, `${b.peran}/${b.instansi}/aktif=${aktif}`);
+  await catat(env, user, 'pengguna', null, email, `${b.peran}/${b.instansi}/aktif=${aktif}/surel=${surel}`);
   return { ok: true };
 }
 async function waliApi(env, user, request) {

@@ -16,9 +16,9 @@ export async function kirimEmail(env, to, subject, text) {
 export async function notify(env, penerima, { judul, isi, tipe = 'info', tautan = '' }) {
   const uniq = [...new Set(penerima.filter(Boolean).map(e => e.toLowerCase()))];
   for (const email of uniq) {
-    const u = await env.DB.prepare('SELECT terima_email,aktif FROM pengguna WHERE email=?').bind(email).first();
+    const u = await env.DB.prepare('SELECT terima_email,aktif,surel_notifikasi FROM pengguna WHERE email=?').bind(email).first();
     if (!u || !u.aktif) continue;
-    const st = u.terima_email ? await kirimEmail(env, email, '[SIF POINT BATARA] ' + judul, isi + (tautan && env.SITE_URL ? `\n\nBuka: ${env.SITE_URL}${tautan}` : '')) : 'tidak diminta';
+    const st = u.terima_email ? await kirimEmail(env, u.surel_notifikasi || email, '[SIF POINT BATARA] ' + judul, isi + (tautan && env.SITE_URL ? `\n\nBuka: ${env.SITE_URL}${tautan}` : '')) : 'tidak diminta';
     await env.DB.prepare('INSERT INTO notifikasi (email,judul,isi,tipe,tautan,dibaca,dibuat,email_status) VALUES (?,?,?,?,?,0,?,?)')
       .bind(email, judul, isi, tipe, tautan, nowIso(), st).run();
   }
